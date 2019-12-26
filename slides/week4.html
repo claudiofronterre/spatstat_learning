@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Spatial Statistics Learning Group</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="fonts_mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="my-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial Statistics Learning Group
+## The linear geostatistical model
+<html>
+<div style="float:left">
+
+</div>
+<hr color='#324147' size=4px width=800px>
+</html>
+### <br/>Week 4: 11 December 2019
+
+---
+
+
+class: inverse, center, middle
+
+# Model formulation
+
+---
+# The linear geostatistical model
+
+`$$Y_i=d(x_i)^{\text{T}}\beta +S(x_i) + Z_i:i=1,\ldots,n$$`
+
+--
+`\(Y_i\)` observation at location `\(x_i\)`
+
+--
+
+`\(d(x_i)\)` is a set of spatially indexed covariates
+
+--
+
+`\(S(x_i)\)` spatial Gaussian process
+
+- stationary and isotropic
+- `\(Cov\{S(x), S(x^{\prime})\}=\sigma^2\rho(u;\phi)\)`
+
+--
+
+`\(Z_i\)` uncorrelated `\(N(0, \tau^2)\)`
+
+--
+
+### .red[Assumption] 
+
+Conditional on `\(S\)`, the `\(Y_i\)` are .red[mutually independent]
+`$$[Y_i\mid S]\sim N(\alpha + d(x_i)^{\text{T}}\beta +S(x_i),\tau^2)$$`
+
+---
+# Residual components of the model
+
+`\(S(x_i)\)` and `\(Z_i\)` represent the variation in `\(Y_i\)` that is not explained by the explanatory variables `\(d(x_i)\)`
+
+--
+
+- `\(S(x_i)\)` explains .red[spatially structured] residual variation
+
+--
+
+- `\(Z_i\)` explains any residual variation .red[without a structure]
+dsadsa
+---
+# .font90[Covariance and correlation structure of] `\(Z_i\)`
+
+`\(\tau^2=0.5\)`
+
+&lt;img src="week4_files/figure-html/zmat-1.png" width="50%" /&gt;&lt;img src="week4_files/figure-html/zmat-2.png" width="50%" /&gt;
+
+---
+# .font80[Covariance and correlation structure of] `\(S(x_i)\)`
+
+`\(\sigma^2=0.5~~~\phi = .15~~~\rho=\exp(-u/\phi)\)`
+
+&lt;img src="week4_files/figure-html/smat-1.png" width="50%" /&gt;&lt;img src="week4_files/figure-html/smat-2.png" width="50%" /&gt;
+
+---
+# .font80[Covariance and correlation structure of] `\(S(x_i)\)`
+
+`\(\sigma^2=0.5~~~\phi = .15~~~\rho=\exp(-u/\phi)\)`
+
+&lt;img src="week4_files/figure-html/dmat-1.png" width="50%" /&gt;&lt;img src="week4_files/figure-html/dmat-2.png" width="50%" /&gt;
+
+---
+# A hierarchical modelling framework
+
+**Need to distinguish between:**
+
+- .red[scientific] modelling of a process whose behavior we wish to understand
+- .red[statistical] modelling of data that tell us something about the process
+
+--
+
+**A general framework:** 
+
+- `\(S\rightarrow\)` the scientific process we wish to understand (.red[signal])
+- `\(Y\rightarrow\)` data that can help us understand the process (.red[noise])
+
+--
+
+**Hierarchical formulation:**($[\cdot]$ means *the distribution of*)
+
+`$$[Y, S]=[Y\mid S][S]$$`
+
+--
+
+`$$[Y, S; \theta]=[Y\mid S; \theta][S; \theta]$$`
+with `\(\theta = (\beta, \sigma^2, \phi, \tau^2)\)`.
+
+---
+class: inverse, center, middle
+
+# Inference
+
+---
+# Likelihood 
+
+**The likelihood function** of a statistical model is the joint probability distribution of the data considered as a function of the parameters.
+
+--
+
+It follows that, if we start from our hierarchical specification of our model 
+`$$[Y, S; \theta]=[Y\mid S; \theta][S; \theta]$$`
+the likelihood can be obtained by integrating out the process `\(S\)`
+
+`$$L(\theta)=\int[Y\mid S; \theta][S; \theta]dS$$`
+--
+
+---
+# Estimate `\(\theta\)`
+
+Pass the function `\(l(\theta)=\log L(\theta)\)` to a general purpose numerical optimization algorithm and find the maximum likelihood estimate `\(\hat{\theta}\)`
+
+--
+
+Need initial parameters for `\(\theta = (\beta, \sigma^2, \phi, \tau^2)\)`
+
+--
+
+- Initial estimates of regression parameters `\(\beta\)` can be obtained by ordinary least squares
+
+--
+
+- initial estimates of covariance parameters `\(\gamma = (\sigma^2, \phi, \tau^2)\)` from variogram of residuals
+
+--
+
+Widely used, but .red[not recommended] except for initial analysis
+
+- weighted least squares criterion:
+`$$W(\gamma)=\sum_kn_k\{\hat{V}(u_k)-V(u_k;\gamma)\}^2$$`
+- lots of arbitrarness
+- standard errors not available
+
+
+---
+# Trans-Gaussian models
+
+The response variable does not often resemble a Gaussian distribution. In this case the fit can be improved by applying a Box Cox transformation
+
+`$$Y_{i}^{*}=\begin{cases}
+(Y_i^\lambda-1)/\lambda &amp; :\lambda&gt;0\\
+\log Y_i &amp; :\lambda=0\\
+\end{cases}$$`
+
+Fit a linear geo-statistical model to `\(Y^*\)` with the extra parameter `\(\lambda\)`
+
+---
+class: inverse, center, middle
+
+# Model validaiton
+
+---
+# Model validation
+
+Monte carlo procedure to theck the validity of the .red[fitted functional form for the spatial correlation].
+
+--
+
+1. Obtain maximul likelihood estimate of `\(\theta\)`
+
+--
+
+2. Simulate the Gaussian process `\(S(x_i)\)` at each of the observed locations `\(x_i:i=1,\ldots,n\)`
+
+--
+
+3. Simulate `\(Y_i:i=1,\ldots,n\)` as independent realisations of a Gaussian random variables with means `\(d(x_i)^T\beta + S(x_i)\)` and variance `\(\tau^2\)`
+
+--
+
+4. Compute the residuals `\(\hat{Z}_i:i=1,\ldots,n\)` from the non-spatial linear regression model fitted to the simulated `\(Y_i\)` using `\(d(x_i)\)` as covariates
+
+--
+
+5. Compute the variogram, `\(\hat{V}_1(u)\)`, based on `\(\hat{Z}_i\)`
+
+--
+
+6. Repeat steps 2 to 5 a large number of times, say `\(B\)`, to give variograms `\(\hat{V}_b(u):b=1,\ldots,B\)`
+
+---
+# Model validation
+
+Calculate `\(\hat{V}_0(u)\)`, the empirical variogram of the residuals from a non-spatial linear model fitted to the observed data.
+
+--
+
+If `\(\hat{V}_0(u)\)` falls within the spread of the simulated `\(\hat{V}_b(u):b=1,\ldots,B\)`
+this indicates compatibility between model and data. 
+
+--
+
+**95% point-wise tolerance band** 
+- order the `\(\hat{V}_b(u):b=1,\ldots,B\)` at each distance `\(u\)`
+- discard the lowest and highest 2.5% of the `\(\hat{V}_b(u)\)`.
+
+---
+# .font80[Scenario 1: omission of the nugget effect]
+
+.pull-left[
+**True model**
+
+`\(Y_i=\mu+S(x_i)+Z_i\)`
+
+] 
+
+.pull-right[
+**Miss-specified model**
+
+`\(Y_i=\mu+S(x_i)\)`
+
+]
+
+--
+
+Model parameters are `\(\mu=1,~~\sigma^2=1,~~\tau^2=1\)`  with correlation function `\(\rho(u;\phi)=\exp(-u/\phi)\)` and `\(\phi=0.1\)`
+
+--
+
+&lt;img src="figs/scenario1.png" width="1107" /&gt;
+
+---
+# .font60[Scenario2: miss-specification of the smoothness parameter]
+
+.pull-left[
+**True model**
+
+`\(Y_i=\mu+S(x_i)+Z_i\)`
+
+Matérn correlation function with `\(\kappa = 5\)`
+] 
+
+.pull-right[
+**Miss-specified model**
+
+`\(Y_i=\mu+S(x_i)+Z_i\)`
+
+Matérn correlation function with `\(\kappa = 0.5\)`
+]
+
+--
+
+Model parameters are `\(\mu=1,~~\sigma^2=1,~~\tau^2=1,~~\phi=0.01\)`
+
+--
+
+&lt;img src="figs/scenario2.png" width="1105" /&gt;
+
+
+---
+# Scenario 3: Non-Gaussian data
+
+.pull-left[
+**True model**
+
+`\(Y_i=\exp\{\mu+S(x_i)+Z_i\}\)`
+
+] 
+
+.pull-right[
+**Miss-specified model**
+
+`\(Y_i=\mu+S(x_i)+Z_i\)`
+
+]
+
+--
+
+Model parameters are `\(\mu=1,~~\sigma^2=2,~~\tau^2=1\)`  with correlation function `\(\rho(u;\phi)=\exp(-u/\phi)\)` and `\(\phi=0.2\)`
+
+--
+
+&lt;img src="figs/scenario3.png" width="1087" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

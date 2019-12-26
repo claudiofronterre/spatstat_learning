@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Spatial Statistics Learning Group</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="fonts_mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="my-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial Statistics Learning Group
+## Gaussian processes and spatial correlation functions
+<html>
+<div style="float:left">
+
+</div>
+<hr color='#324147' size=4px width=800px>
+</html>
+### <br/>Week 3: 20 November 2019
+
+---
+
+
+
+# Back to the linear model
+
+**Classical linear model**
+
+`$$Y_i=\alpha + d(x_i)^{\text{T}}\beta+Z_i:i=1,\ldots,n$$`
+--
+
+- `\(Y_i\)` observed outcome at spatial location `\(x_i\)`
+
+--
+
+- `\(d(x_i)\)` is a set of explanatory variables
+
+--
+
+- `\(Z_i\)` uncorrelated `\(N(0, \tau^2)\)`
+
+---
+# Testing for residual spatial correlation
+
+1. calculate residuals `\(\hat{z}_i = y_i - \hat{\alpha}-d(x_i)^{\text{T}}\hat{\beta}\)`
+
+2. calculate .red[empirical variogram] of residuals,
+
+3. re-calculate and plot 95% confindence bands for empirical variogams obtained by .red[independent random permutations of residuals]
+
+--
+
+&lt;img src="week3_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+# Capturing residual spatial correlation
+
+`$$Y_i=\alpha + d(x_i)^{\text{T}}\beta + \color{red}{\boldsymbol{?}} + Z_i:i=1,\ldots,n$$`
+--
+
+`\(\color{red}{\boldsymbol{?}}=\)` lack of spatial information
+
+--
+
+**How can we parametrise `\(\color{red}{\boldsymbol{?}}\)`**
+
+--
+
+We introduce a stochastic process `\(S(x)\)` with a spatial structure. It is our .red[proxy for ignorance]. 
+
+--
+
+**Geostatistical model**
+
+`$$Y_i=\alpha + d(x_i)^{\text{T}}\beta +S(x_i) + Z_i:i=1,\ldots,n$$`
+--
+**How can we construct `\(S(x)\)`?**
+
+Many ways to construct a stochastic model for a spatial surface `\(S(x)\)`...
+
+---
+# Gaussian processes
+
+`\(S(x) \rightarrow Gaussian~process=\)` for any set of locations `\(x_1,\ldots,x_n\)`, the joint probability distribution of `\(S(x_1),...,S(x_n)\)` is multivariate Normal
+
+`$$S(x) \sim MVN(0, \Sigma)$$`
+
+--
+
+**Properties:**
+- .red[stationary] `\(\rightarrow\)` `\(E[S(x)]=0\)` and `\(Var[S(x)]=\sigma^2\)` 
+- .red[isotropic] `\(\rightarrow\)` `\(Cov\{S(x), S(x^{\prime})\}=\sigma^2\rho(u)\)` with `\(u=\mid\mid x-x^{\prime}\mid\mid\)`
+
+--
+
+**Correlation function**: how to parameterise `\(\rho(u)\)`?
+- must produce a positive semi-definite matrix
+- must respect Tobler's first law of geography `\(\rightarrow \rho(u)\)` should be a non increasing function of `\(u\)`. 
+
+
+---
+# .font80[The Matérn family of correlation functions]
+
+`$$\rho(u)=\{2^{\kappa - 1}\Gamma(\kappa)\}(u/\phi)^{\kappa}K_{\kappa}(u/\phi)$$`
+`\(K_{\kappa}:\)` modified Bessel function of order `\(\kappa\)`
+
+--
+
+**Interpretation**
+- `\(\kappa\)` determines the .red[smoothness] of the underlying Gaussian process
+`$$k&gt;r\Rightarrow S(x)~\text{is}~r~\text{times differentiable}$$`
+- `\(\phi\)` is the .red[range parameter] and determines the scale/strength of the spatial correlation.
+- .red[practical range] is the distance at which `\(\rho(u)=0.05\)`
+
+--
+
+**Special cases**
+- `\(\kappa=0.5\)` gives `\(\rho(u)=\exp\{-u/\phi\}\)`
+- `\(\kappa\rightarrow \infty\)` gives `\(\rho(u)=\exp\{-(u/\phi)^2\}\)`
+
+Often sufficient to .red[choose] amongst `\(\kappa=0.5, 1.5, 2.5\)`
+---
+# Examples: varying `\(\phi\)` and `\(\kappa = 0.5\)`
+
+&lt;img src="week3_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+---
+# Examples: varying `\(\kappa\)` and fixed p. range
+&lt;img src="week3_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Examples: varying `\(\kappa\)` and fixed p. range
+&lt;img src="week3_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+---
+class: inverse, middle, center
+
+# Statistical inference
+
+---
+# Likelihood-based inference
+
+1. Specify the joint probability distribution for a set of data `\(y\)` given a set of parameters `\(\theta\)` `$$[Y;\theta]$$`
+2. Find that set of values for `\(\theta\)` that are compatible with the observed data
+
+--
+
+**The likelihood function** of a statistical model is the joint probability distribution of the data considered as a function of the parameters:
+`$$L(\theta)=[y;\theta]$$`
+the maximuk likelyhood estimate of `\(\theta\)` is the value `\(\hat{\theta}\)` that maximises `\(L(\theta)\)`.
+
+---
+# Bayesian inference
+
+**Likelihood-based inference**: `\(\theta\rightarrow\)` .red[unknown constant] 
+
+**Bayesian inference**: `\(\theta\rightarrow\)`  .red[unobserved random variables]
+
+--
+
+Hence we need to specify a joint distribution for the data and the parameters
+`$$[Y,\theta]=[Y\mid \theta][\theta]$$`
+
+--
+
+We are interested to obtain the distribution of `\(\theta\)` conditional on the oserved data
+`$$[\theta\mid Y]=\frac{[Y,\theta]}{[Y]}=\frac{[Y\mid \theta][\theta]}{\int[Y\mid \theta][\theta]d\theta}$$`
+--
+
+- `\([\theta]\)` is the .red[prior distribution] and relfects uncertainty about `\(\theta\)` and prior beliefs before collecting the data `\(Y\)`
+- `\([\theta\mid Y]\)` is the .red[posterior distribution] and reflects uncertainty about `\(\theta\)` after collecting data.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

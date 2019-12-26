@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Spatial Statistics Learning Group</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="fonts_mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="my-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial Statistics Learning Group
+## Regression modelling for spatially referenced data
+<html>
+<div style="float:left">
+
+</div>
+<hr color='#324147' size=4px width=800px>
+</html>
+### <br/>Week 2: 6 November 2019
+
+---
+
+
+class: inverse, middle, center
+
+# A review of generalized linear models
+
+---
+# Generalized linear models
+
+**Assumptions:**
+
+- `\(Y_i\sim f(\cdot)\)` belongs to the exponential family (i.e. Normal, Poisson, Binomial...) 
+
+--
+
+- `\(E[Y_i]=m_i\mu_i\)` and `\(Var[Y_i]=m_iV(\mu_i)\)`
+
+--
+
+- `\(g(\mu_i)=\eta_i=d_{i}^{\text{T}}\beta\)`
+
+--
+
+- `\(Y_i\)` are mutually independent for `\(i=1,\ldots,n\)`
+
+---
+# Overdispersion
+
+**Definition:** the data show a greater variability than that implied by a classical GLM.
+
+--
+
+Possible cause of over dispersion are:
+- omission of risk factors
+- intrinsic random variation that results from individual characteristics
+- **spatial correlation**
+
+--
+
+`$$Var[Y_i + Y_j]=Var[Y_i]+Var[Y_j]+2Cov(Y_i, Y_j)$$`
+
+--
+
+Solution for the first two:
+- *random effects models*: `\(\eta_i=d_{i}^{\text{T}}\beta+Z_i\)` where `\(Z_i\)` is a set of *independent* Gaussian variables with mean zero and variance `\(\sigma^2\)`. 
+---
+# Generalized linear mixed models
+**Assumptions:**
+
+- `\(Z_i\)` are i.i.d. random variables
+
+--
+
+- `\(Y_i\mid Z_i\sim f(\cdot)\)` belongs to the exponential family 
+
+--
+
+- `\(E[Y_i\mid Z_i]=m_i\mu_i\)` and `\(Var[Y_i\mid Z_i]=m_iV(\mu_i)\)`
+
+--
+
+- `\(g(\mu_i)=\eta_i=d_{i}^{\text{T}}\beta+Z_i\)`
+
+--
+
+- `\(Y_i\mid Z_i\)` are mutually independent for `\(i=1,\ldots,n\)`
+
+--
+
+In this way we can account for extra non-spatial variability in the data. This will be our starting point to look for evidence of spatial dependence in the data.
+---
+class: inverse, middle, center
+
+# Questioning the assumption of independence
+
+---
+# Independence
+
+One of the main assumptions of generalised linear (mixed) models is tha the observations `\(Y_i\)` are mutually independent. 
+
+--
+
+.center[**Is this assumption is still valid for spatial data?**]
+
+--
+
+**First law of geography:** close things are more related than distant things.
+
+--
+
+There are two main consequences for violating this assumptions:
+
+1. Narrower confidence intervals for the regression parameters that leads to an increase in Type I error.
+2. We don't exploit the spatial correlation when doing predictions. 
+
+---
+class: center, middle, inverse
+
+# Testing for spatial correlation
+
+---
+# The theoretical variogram
+
+It measures the similarity of values as a function of the distance between their locations. It is an exploratory tool that helps to asses the presence of spatial dependece in the data. 
+
+--
+
+The **theoretical variogram** is defined as:
+`$$V_{Y}(u_{ij})=\frac{1}{2}E\left\{[Y(x_{i})-Y(x_{j})]^2\right\}$$`
+where `\(u_{ij}\)` is the euclidean distance between point `\(x_i\)` and point `\(x_j\)`
+
+--
+
+Suppose random variables `\(Y(x_i)\)` and `\(Y(x_j)\)` have expectation zero, variance `\(\sigma^2\)` and correlation `\(\rho(u_{ij})\)` then
+
+`$$V_{Y}(u_{ij})=\sigma^2\{1 - \rho(u_{ij})\}$$`
+---
+#What is the variogram estimating?
+
+`$$V_{Y}(u)=\sigma^2\{1 - \rho(u)\}$$`
+The function `\(\rho(u)\)` is called the **spatial correlation function**, is the statistical version of Tobler's law (decreases with increasing `\(u\)`)
+
+--
+
+**Key assumption is stationarity:**
+- spatially constant expectation, `\(\mu(x)=\mu\)`
+- spatially constant variance, `\(\sigma^2(x)=\sigma^2\)`
+- correlation is a function of distance
+
+--
+
+**How to accommodate explanatory variables?**
+- fit a provisional non-spatial regression model
+- calculate variogram of standardized residuals
+---
+# The theoretical variogram
+&lt;img src="week2_files/figure-html/semivario-1.png" style="display: block; margin: auto;" /&gt;
+---
+# .font80[The cloud and empirical semivariogram]
+
+The obseserved quantities
+`$$v_{ij}=\frac{1}{2}(y_{i}-y_{j})^2$$`
+constitute the **cloud semivariogram**.  
+
+If then we average values of `\(v_{ij}\)` over suitably narrow ranges of inter-point distances `\(u_{ij}\)` we obtain the **empirical semivariogram**
+
+
+&lt;img src="week2_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+# Testing for spatial correlation
+
+How do we know if the sample variogram shows evidence of spatial correlation?
+
+1. Permute the locations `\(x_1,\ldots,x_n\)` while holding fix the rest of the data.
+2. Compute the sample variogram for the permuted data.
+3. Repeat 1 and 2 a large enough number of times (e.g. 1000).
+4. Compute the 95% confidence intervals at each binned distance `\(u\)`.
+
+**If the sample variogram falls entirely within the 95% confidence intervals then there is NO evidence of spatial correlation.** 
+
+**Note:** it is always a good idea to conduct this test on the residuals of a non-spatial model rather than on the observed outcome.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

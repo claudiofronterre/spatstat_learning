@@ -1,0 +1,236 @@
+---
+title: "Spatial Statistics Learning Group"
+subtitle: "Gaussian processes and spatial correlation functions<html><div style='float:left'></div><hr color='#324147' size=4px width=800px></html>"
+date: "<br/>Week 3: 20 November 2019"
+output:
+  xaringan::moon_reader:
+    css: ["default", "mtheme.css", "fonts_mtheme.css", "my-theme.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(cache = T)
+```
+
+# Back to the linear model
+
+**Classical linear model**
+
+$$Y_i=\alpha + d(x_i)^{\text{T}}\beta+Z_i:i=1,\ldots,n$$
+--
+
+- $Y_i$ observed outcome at spatial location $x_i$
+
+--
+
+- $d(x_i)$ is a set of explanatory variables
+
+--
+
+- $Z_i$ uncorrelated $N(0, \tau^2)$
+
+---
+# Testing for residual spatial correlation
+
+1. calculate residuals $\hat{z}_i = y_i - \hat{\alpha}-d(x_i)^{\text{T}}\hat{\beta}$
+
+2. calculate .red[empirical variogram] of residuals,
+
+3. re-calculate and plot 95% confindence bands for empirical variogams obtained by .red[independent random permutations of residuals]
+
+--
+
+```{r, echo = F, fig.align='center', fig.height=5.5}
+library(geoR)
+df <- ca20
+vario <- variog(df, uvec = seq(min(dist(df$coords)), max(dist(df$coords)) / 3,
+                                                         l = 15), 
+                messages = F)
+env <- variog.mc.env(df, obj.variog = vario, nsim = 1000, messages = F)
+plot(vario, envelope.obj = env)
+```
+
+
+---
+# Capturing residual spatial correlation
+
+$$Y_i=\alpha + d(x_i)^{\text{T}}\beta + \color{red}{\boldsymbol{?}} + Z_i:i=1,\ldots,n$$
+--
+
+$\color{red}{\boldsymbol{?}}=$ lack of spatial information
+
+--
+
+**How can we parametrise $\color{red}{\boldsymbol{?}}$**
+
+--
+
+We introduce a stochastic process $S(x)$ with a spatial structure. It is our .red[proxy for ignorance]. 
+
+--
+
+**Geostatistical model**
+
+$$Y_i=\alpha + d(x_i)^{\text{T}}\beta +S(x_i) + Z_i:i=1,\ldots,n$$
+--
+**How can we construct $S(x)$?**
+
+Many ways to construct a stochastic model for a spatial surface $S(x)$...
+
+---
+# Gaussian processes
+
+$S(x) \rightarrow Gaussian~process=$ for any set of locations $x_1,\ldots,x_n$, the joint probability distribution of $S(x_1),...,S(x_n)$ is multivariate Normal
+
+$$S(x) \sim MVN(0, \Sigma)$$
+
+--
+
+**Properties:**
+- .red[stationary] $\rightarrow$ $E[S(x)]=0$ and $Var[S(x)]=\sigma^2$ 
+- .red[isotropic] $\rightarrow$ $Cov\{S(x), S(x^{\prime})\}=\sigma^2\rho(u)$ with $u=\mid\mid x-x^{\prime}\mid\mid$
+
+--
+
+**Correlation function**: how to parameterise $\rho(u)$?
+- must produce a positive semi-definite matrix
+- must respect Tobler's first law of geography $\rightarrow \rho(u)$ should be a non increasing function of $u$. 
+
+
+---
+# .font80[The Matérn family of correlation functions]
+
+$$\rho(u)=\{2^{\kappa - 1}\Gamma(\kappa)\}(u/\phi)^{\kappa}K_{\kappa}(u/\phi)$$
+$K_{\kappa}:$ modified Bessel function of order $\kappa$
+
+--
+
+**Interpretation**
+- $\kappa$ determines the .red[smoothness] of the underlying Gaussian process
+$$k>r\Rightarrow S(x)~\text{is}~r~\text{times differentiable}$$
+- $\phi$ is the .red[range parameter] and determines the scale/strength of the spatial correlation.
+- .red[practical range] is the distance at which $\rho(u)=0.05$
+
+--
+
+**Special cases**
+- $\kappa=0.5$ gives $\rho(u)=\exp\{-u/\phi\}$
+- $\kappa\rightarrow \infty$ gives $\rho(u)=\exp\{-(u/\phi)^2\}$
+
+Often sufficient to .red[choose] amongst $\kappa=0.5, 1.5, 2.5$
+---
+# Examples: varying $\phi$ and $\kappa = 0.5$
+
+```{r, echo = F, fig.align='center', fig.width=10, fig.height=8}
+u <- seq(0, 10, l = 500)
+phi1 <- 0.1
+phi2 <- 1.5
+phi3 <- 2.5
+e1 <- exp(-u/phi1) 
+e2 <- exp(-u/phi2)
+e3 <- exp(-u/phi3)
+df <- data.frame(u = rep(u, times = 3), 
+                 phi = rep(c(phi1, phi2, phi3), each = 500),
+                 corr = c(e1, e2, e3))
+library(ggplot2)
+ggplot(df, aes(x = u, y = corr, col = as.factor(phi))) +
+  geom_line() +
+  geom_hline(yintercept = 0.05) +
+  labs(col = expression(phi), y = expression(rho[(u)])) +
+  scale_color_brewer(type =  "qual", palette = 6) +
+  theme(text = element_text(size = 20))
+```
+---
+# Examples: varying $\kappa$ and fixed p. range
+```{r, echo = F, fig.align='center', fig.width=10, fig.height=8}
+u <- seq(0, 5, l = 500)
+kappa1 <- 0.5
+kappa2 <- 1.5
+kappa3 <- 2.5
+k1 <- matern(u, phi = 1, kappa = kappa1)
+k2 <- matern(u, phi = .632, kappa = kappa2)
+k3 <- matern(u, phi = .506, kappa = kappa3)
+
+df <- data.frame(u = rep(u, times = 3), 
+                 phi = rep(c(kappa1, kappa2, kappa3), each = 500),
+                 corr = c(k1, k2, k3))
+library(ggplot2)
+ggplot(df, aes(x = u, y = corr, col = as.factor(phi))) +
+  geom_line() +
+  geom_hline(yintercept = 0.05) +
+  labs(col = expression(kappa), y = expression(rho[(u)])) +
+  scale_color_brewer(type =  "qual", palette = 6) +
+  theme(text = element_text(size = 20))
+```
+
+---
+
+# Examples: varying $\kappa$ and fixed p. range
+```{r, echo = F, fig.align='center', fig.width=10, fig.height=8}
+u <- seq(0, 5, l = 500)
+kappa1 <- 0.5
+kappa2 <- 1.5
+kappa3 <- 2.5
+phi1 <- 1
+phi2 <- .632
+phi3 <- .506
+set.seed(123)
+s1 <- grf(n = 100, grid = cbind(u, 1), cov.model = "matern", kappa = kappa1, cov.pars = c(1, phi1), messages = F)$data
+set.seed(123)
+s2 <- grf(n = 100, grid = cbind(u, 1), cov.model = "matern", kappa = kappa2, cov.pars = c(1, phi2), messages = F)$data
+set.seed(123)
+s3 <- grf(n = 100, grid = cbind(u, 1), cov.model = "matern", kappa = kappa3, cov.pars = c(1, phi3), messages = F)$data
+df <- data.frame(u = rep(u, times = 3), 
+                 phi = rep(c(kappa1, kappa2, kappa3), each = 500),
+                 corr = c(s1, s2, s3))
+library(ggplot2)
+ggplot(df, aes(x = u, y = corr, col = as.factor(phi))) +
+  geom_line() +
+  labs(col = expression(kappa), y = expression(rho[(u)])) +
+  scale_color_brewer(type =  "qual", palette = 6) +
+  theme(text = element_text(size = 20))
+```
+---
+class: inverse, middle, center
+
+# Statistical inference
+
+---
+# Likelihood-based inference
+
+1. Specify the joint probability distribution for a set of data $y$ given a set of parameters $\theta$ $$[Y;\theta]$$
+2. Find that set of values for $\theta$ that are compatible with the observed data
+
+--
+
+**The likelihood function** of a statistical model is the joint probability distribution of the data considered as a function of the parameters:
+$$L(\theta)=[y;\theta]$$
+the maximuk likelyhood estimate of $\theta$ is the value $\hat{\theta}$ that maximises $L(\theta)$.
+
+---
+# Bayesian inference
+
+**Likelihood-based inference**: $\theta\rightarrow$ .red[unknown constant] 
+
+**Bayesian inference**: $\theta\rightarrow$  .red[unobserved random variables]
+
+--
+
+Hence we need to specify a joint distribution for the data and the parameters
+$$[Y,\theta]=[Y\mid \theta][\theta]$$
+
+--
+
+We are interested to obtain the distribution of $\theta$ conditional on the oserved data
+$$[\theta\mid Y]=\frac{[Y,\theta]}{[Y]}=\frac{[Y\mid \theta][\theta]}{\int[Y\mid \theta][\theta]d\theta}$$
+--
+
+- $[\theta]$ is the .red[prior distribution] and relfects uncertainty about $\theta$ and prior beliefs before collecting the data $Y$
+- $[\theta\mid Y]$ is the .red[posterior distribution] and reflects uncertainty about $\theta$ after collecting data.
+

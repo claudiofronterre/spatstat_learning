@@ -1,0 +1,206 @@
+---
+title: "Spatial Statistics Learning Group"
+subtitle: "Regression modelling for spatially referenced data<html><div style='float:left'></div><hr color='#324147' size=4px width=800px></html>"
+date: "<br/>Week 2: 6 November 2019"
+output:
+  xaringan::moon_reader:
+    css: ["default", "mtheme.css", "fonts_mtheme.css", "my-theme.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+class: inverse, middle, center
+
+# A review of generalized linear models
+
+---
+# Generalized linear models
+
+**Assumptions:**
+
+- $Y_i\sim f(\cdot)$ belongs to the exponential family (i.e. Normal, Poisson, Binomial...) 
+
+--
+
+- $E[Y_i]=m_i\mu_i$ and $Var[Y_i]=m_iV(\mu_i)$
+
+--
+
+- $g(\mu_i)=\eta_i=d_{i}^{\text{T}}\beta$
+
+--
+
+- $Y_i$ are mutually independent for $i=1,\ldots,n$
+
+---
+# Overdispersion
+
+**Definition:** the data show a greater variability than that implied by a classical GLM.
+
+--
+
+Possible cause of over dispersion are:
+- omission of risk factors
+- intrinsic random variation that results from individual characteristics
+- **spatial correlation**
+
+--
+
+$$Var[Y_i + Y_j]=Var[Y_i]+Var[Y_j]+2Cov(Y_i, Y_j)$$
+
+--
+
+Solution for the first two:
+- *random effects models*: $\eta_i=d_{i}^{\text{T}}\beta+Z_i$ where $Z_i$ is a set of *independent* Gaussian variables with mean zero and variance $\sigma^2$. 
+---
+# Generalized linear mixed models
+**Assumptions:**
+
+- $Z_i$ are i.i.d. random variables
+
+--
+
+- $Y_i\mid Z_i\sim f(\cdot)$ belongs to the exponential family 
+
+--
+
+- $E[Y_i\mid Z_i]=m_i\mu_i$ and $Var[Y_i\mid Z_i]=m_iV(\mu_i)$
+
+--
+
+- $g(\mu_i)=\eta_i=d_{i}^{\text{T}}\beta+Z_i$
+
+--
+
+- $Y_i\mid Z_i$ are mutually independent for $i=1,\ldots,n$
+
+--
+
+In this way we can account for extra non-spatial variability in the data. This will be our starting point to look for evidence of spatial dependence in the data.
+---
+class: inverse, middle, center
+
+# Questioning the assumption of independence
+
+---
+# Independence
+
+One of the main assumptions of generalised linear (mixed) models is tha the observations $Y_i$ are mutually independent. 
+
+--
+
+.center[**Is this assumption is still valid for spatial data?**]
+
+--
+
+**First law of geography:** close things are more related than distant things.
+
+--
+
+There are two main consequences for violating this assumptions:
+
+1. Narrower confidence intervals for the regression parameters that leads to an increase in Type I error.
+2. We don't exploit the spatial correlation when doing predictions. 
+
+---
+class: center, middle, inverse
+
+# Testing for spatial correlation
+
+---
+# The theoretical variogram
+
+It measures the similarity of values as a function of the distance between their locations. It is an exploratory tool that helps to asses the presence of spatial dependece in the data. 
+
+--
+
+The **theoretical variogram** is defined as:
+$$V_{Y}(u_{ij})=\frac{1}{2}E\left\{[Y(x_{i})-Y(x_{j})]^2\right\}$$
+where $u_{ij}$ is the euclidean distance between point $x_i$ and point $x_j$
+
+--
+
+Suppose random variables $Y(x_i)$ and $Y(x_j)$ have expectation zero, variance $\sigma^2$ and correlation $\rho(u_{ij})$ then
+
+$$V_{Y}(u_{ij})=\sigma^2\{1 - \rho(u_{ij})\}$$
+---
+#What is the variogram estimating?
+
+$$V_{Y}(u)=\sigma^2\{1 - \rho(u)\}$$
+The function $\rho(u)$ is called the **spatial correlation function**, is the statistical version of Tobler's law (decreases with increasing $u$)
+
+--
+
+**Key assumption is stationarity:**
+- spatially constant expectation, $\mu(x)=\mu$
+- spatially constant variance, $\sigma^2(x)=\sigma^2$
+- correlation is a function of distance
+
+--
+
+**How to accommodate explanatory variables?**
+- fit a provisional non-spatial regression model
+- calculate variogram of standardized residuals
+---
+# The theoretical variogram
+```{r semivario, echo=FALSE, fig.align='center', fig.width=9, fig.height=6, dpi=600, warning=FALSE, message=FALSE}
+library(geoR)
+kappa = 0.5
+model = "matern"
+phi = 0.25
+sigma= 1
+nugget = 0
+prange = practicalRange(model, phi, kappa)
+
+u <- seq(0,1.5, l = 500)
+plot(u, nugget + sigma - cov.spatial(u, model, cov.pars = c(sigma,phi),kappa), xlim = c(0,1.5), ylim = c(0,1.2), type = "l", ylab = expression(V[Y](u)), col = "darkblue", lwd = 3)
+
+segments(0, nugget + sigma, 1.5, nugget + sigma, col = "darkblue", lwd = 1.5, lty = 2)
+#segments(0, nugget, 1.5, nugget, col = "darkblue", lwd = 1.5, lty = 2)
+
+segments(prange, 0.95, prange, 0,col = "darkblue", lty = 2, lwd = 1.5)
+
+text(x = 0.05, y = 1.05, label = expression(sigma^2~"="~"sill") , col = "darkblue")
+text(x = 0.75, y = 0, label = "practical range" , col = "darkblue")
+```
+---
+# .font80[The cloud and empirical semivariogram]
+
+The obseserved quantities
+$$v_{ij}=\frac{1}{2}(y_{i}-y_{j})^2$$
+constitute the **cloud semivariogram**.  
+
+If then we average values of $v_{ij}$ over suitably narrow ranges of inter-point distances $u_{ij}$ we obtain the **empirical semivariogram**
+
+
+```{r, echo=F, fig.align="center", fig.width=12, fig.height=5, dpi=600}
+library(geoR)
+v1 <- variog(elevation, messages = F, op = "cloud")
+v2 <- variog(elevation, messages = F)
+
+par(mfrow = c(1, 2))
+plot(v1, main = "Cloud Semivariogram")
+abline(v = v2$u, col = "red", lty = 2)
+plot(v2, main = "Empirical Semivariogram")
+```
+
+---
+# Testing for spatial correlation
+
+How do we know if the sample variogram shows evidence of spatial correlation?
+
+1. Permute the locations $x_1,\ldots,x_n$ while holding fix the rest of the data.
+2. Compute the sample variogram for the permuted data.
+3. Repeat 1 and 2 a large enough number of times (e.g. 1000).
+4. Compute the 95% confidence intervals at each binned distance $u$.
+
+**If the sample variogram falls entirely within the 95% confidence intervals then there is NO evidence of spatial correlation.** 
+
+**Note:** it is always a good idea to conduct this test on the residuals of a non-spatial model rather than on the observed outcome.
