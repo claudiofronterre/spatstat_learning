@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Spatial Statistics Learning Group</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="fonts_mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="my-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial Statistics Learning Group
+## Spatio-temporal geostatistical analysis
+<html>
+<div style="float:left">
+
+</div>
+<hr color='#324147' size=4px width=800px>
+</html>
+### <br/>Week 6: 12 February 2020
+
+---
+
+
+
+# Introduction
+
+For some phenomena of interest both .red[*where*] and .red[*when*] matters
+
+It is .red[impossible] to formulate a unique model suitable for any spatio-temporal analysis
+
+Context specific considerations `\(\rightarrow\)` interactions between space and time `\(\rightarrow\)` different models
+
+---
+# Spatio-temporal prevalence data
+
+**Prevalence data**
+- `\(x_i =\)` location of a village/school/community/household
+- `\(t_i =\)` time when data is recorderd
+- `\(n_i =\)` total number of sampled individuals
+- `\(y_i =\)` total number of positives
+
+--
+
+### .red[Assumption] 
+- `\(Y\mid S(x, t), Z(x,t)\)` are .red[mutually independent] `\(\text{Binomial}(n_i,p(x_i, t_i))\)` such that
+
+`$$\log\left\{\frac{p(x_i, t_i)}{1 - p(x_i, t_i)}\right\}=d(x_i, t_i)^{\text{T}}\beta +S(x_i, t_i) + Z(x_i, t_i)$$`
+
+---
+# Random effects `\(S\)` and `\(Z\)`
+
+**Structured random effects**
+
+Our set of dependent random effects `\(S(\cdot)\)` is now indexed both by space `\(x_i\)` and time `\(t_i\)`
+
+`\(S(x_i, t_i)\)` `\(\rightarrow\)` cumulative effect of unmeasured spatio-temporal risk factors
+
+`\(S(x, t)\sim GP(\mu = 0, \Sigma = \sigma^2\rho\{x, x^{\prime}, t, t^\prime; \theta\})\)`
+
+`\(\theta\)` is a vector of parameters that regulate:
+- .red[scale] of the spatial and temporal correlation
+- .red[strenght] of the space-time interaction
+- .red[smothness] of `\(S(x, t)\)`
+
+--
+
+**Unstructured random effects**
+
+Account for non-spatial and non-temporal extra-binomial variation
+
+`\(Z(x, t)\sim N(0, \tau^2)\)`
+
+---
+# Uses of this model
+
+**Estimation** 
+
+What are the risk factors associated with disease prevalence?
+
+`\(~~~~~~\rightarrow\)` focus on the regression coefficients `\(\beta\)`
+
+
+--
+&lt;br/&gt;
+
+**Prediction**
+
+How to interpolate the spatio-temporal pattern of disease prevalence?
+
+`\(~~~~~~\rightarrow\)` focus on `\(d(x,t)^T\beta+S(x,t)\)` at both sampled and unsampled locations `\(\mathcal{X}\)` &lt;br&gt; `\(~~~~~~~~~~~~\)`and times `\(\mathcal{T}\)`
+
+
+---
+# Statistical analysis workflow
+
+&lt;img src="figs/workflow.png" width="30%" style="display: block; margin: auto;" /&gt;
+
+---
+# Exploratory analysis
+
+The starting point is a .red[non-spatial] model, `\(S(x, t) = 0\)` for all `\(x\)` and `\(t\)`:
+
+`$$\log\left\{\frac{p(x_i, t_i)}{1 - p(x_i, t_i)}\right\}=d(x_i, t_i)^{\text{T}}\beta + Z(x_i, t_i)$$`
+
+--
+&lt;br/&gt;
+We then analyse a point estimate of the residuals `\(\tilde{Z}(x_i,t_i)\)` to:
+1. testing for the presence of .red[residual spatio-temporal correlation]
+2. formulate a model and provide an initial guess for `\(\theta\)`
+--
+
+
+Working assumption that `\(S(x, t)\)` is a .red[stationary] and .red[isotropic] process
+`$$\rho(x, x^{\prime}, t, t^\prime; \theta)=\rho(u, v; \theta)$$`
+- `\(u=\mid\mid x-x^\prime\mid\mid\)` is the Euclidean distance
+- `\(v=\mid t - t^\prime \mid\)`
+---
+# Spatio-temporal variogram
+
+**Theoretical variogram**
+
+`\(W(x, t) = S(x, t) + Z(x, t)\)`
+
+`$$\gamma(u, v; \theta)=\frac{1}{2}E\left[\{W(x, t) - W(x^\prime, t^\prime)\}^2\right]=\tau^2 + \sigma^2[1-\rho(u, v; \theta)]$$`
+--
+
+&lt;br/&gt;
+**Empirical variogram**
+
+Let `\(n(u, v)\)` denote the pairs `\((i, j)\)` such that `\(\mid\mid x_i-x_j\mid\mid=u\)` and `\(\mid t_i - t_j\mid=v\)`
+`$$\tilde{\gamma}(u, v)=\frac{1}{2\mid n(u, v) \mid}\sum_{(i,j)\in n(u, v)}\{\tilde{Z}(x_i, t_i) - \tilde{Z}(x_j, t_j)\}^2$$`
+where `\(\mid n(u, v)\mid\)` is the number of pairs in the set.
+---
+# Testing for residual s. t. dependence
+
+Monte carlo procedure to check the presence of residual spatio-temporal correlation:
+
+1. permute the order of the data, including `\(\tilde{Z}(x_i, t_i)\)`, while holding `\((x_i, t_i)\)` fixed;
+
+2. compute the empirical variogram for `\(\tilde{Z}(x_i, t_i)\)`;
+
+3. repeat 1. and 2. a large enough number of times, say `\(B\)`;
+
+4. use the resulting `\(B\)` empirical variograms to generate 95% tolerance intervals at each of the pre-defined distance bins.
+
+If `\(\hat{\gamma}(u, v)\)` lies outside these intervals, then the data show evidence of residual spatio-temporal correlation.
+
+---
+# Spation-temporal correlation functions
+
+Gneiting proposed the following class of spatio-temporal correlation functions
+`$$\rho(u, v; \theta) = \frac{1}{(1+v/\psi)^{\delta + 1}}\exp\left\{-\frac{u/\phi}{(1+v/\psi)^{\xi/2}}\right\}$$`
+`\(\phi\)` and `\((\delta, \psi)\)` are positive parameters that determine the rate at which the spatial and temporal correlations decay, respectively
+
+--
+
+A spatio-temporal correlation function is .red[separale] if 
+`$$\rho(u, v; \theta)=\rho_1(v;\theta_1)\rho_2(u;\theta_2)$$`
+where `\(\rho_1\)` and `\(\rho_2\)` are purely temporal and  purely spatial correlation functions, respectively.
+
+--
+
+The parameter `\(\xi \in [0, 1]\)` represents the extent of non-separability.
+
+
+---
+class: inverse, center, middle
+
+# Application
+
+---
+# Malaria prevalence in Senegal
+
+**1334 surveys conducted in Senegal between 1905 and 2014**
+
+Outcome of interest is `\(y_i\)` number of positive microscopy tests out of `\(n_i\)` for *Plasmodium falciparum* at a community location `\(x_i\)` and year `\(t_i\)`  
+
+&lt;img src="figs/table_malaria.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+# Malaria prevalence in Senegal
+
+&lt;img src="figs/malaria_map.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+# Non-spatial model
+
+`\begin{eqnarray*}
+\log\left\{\frac{p(x_i, t_i)}{1 - p(x_i, t_i)}\right\} &amp; = &amp; \beta_1 + \beta_2a(x_i, t_i) + \beta_3\max\{a(x_i, t_i) - 5, 0\} +\\
+&amp;  &amp; + \beta_4A(x_i, t_i) + \beta_5\max\{A(x_i, t_i) - 20, 0\} + Z(x_i, t_i)\\  
+\end{eqnarray*}`
+where `\(a(x_i, t_i)\)` and `\(A(x_i, t_i)\)` are the lowest and largest observed ages among the sampled individuals at location `\(x_i\)` and time `\(t_i\)`
+
+--
+
+Fit the model and estimate `\(\tilde{Z}(x_i, t_i)\)` to compute the empirical spatio-temporal variogram
+
+---
+# Empirical spatio-temporal variogram
+
+&lt;img src="figs/empvario_malaria.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+# Spatio-temporal model
+
+We add our spatio-temporal process `\(\color{red}{S(x_i, t_i)}\)`
+`\begin{eqnarray*}
+\log\left\{\frac{p(x_i, t_i)}{1 - p(x_i, t_i)}\right\} &amp; = &amp; \beta_1 + \beta_2a(x_i, t_i) + \beta_3\max\{a(x_i, t_i) - 5, 0\} +\\
+&amp;  &amp; \beta_4A(x_i, t_i) + \beta_5\max\{A(x_i, t_i) - 20, 0\} +\\
+&amp;  &amp; \color{red}{S(x_i, t_i)} + Z(x_i, t_i) 
+\end{eqnarray*}`
+
+&lt;img src="figs/table_estimates_malaria.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+# Model validation
+
+&lt;img src="figs/modelvario_malaria.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+# Predictions
+
+http://fhm-chicas-apps.lancs.ac.uk/shiny/users/giorgi/mapMalariaSEN/
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
