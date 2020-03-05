@@ -17,3 +17,5 @@ This repository contains the material (mainly the slides) used for the spatial [
 - [Week 6](https://claudiofronterre.github.io/spatstat_learning/slides/week6.html)
 
 - [Week 7](https://claudiofronterre.github.io/spatstat_learning/slides/week7.html)
+
+- [Week 8](https://claudiofronterre.github.io/spatstat_learning/slides/week8.html)
