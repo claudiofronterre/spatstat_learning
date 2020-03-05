@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Spatial Statistics Learning Group</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="fonts_mtheme.css" type="text/css" />
+    <link rel="stylesheet" href="my-theme.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Spatial Statistics Learning Group
+## Geostatistical design
+<html>
+<div style="float:left">
+
+</div>
+<hr color='#324147' size=4px width=800px>
+</html>
+### <br/>Week 8: 2 March 2020
+
+---
+
+
+
+# Introduction
+
+- **Classical design:** focus on the sample size, how much data to collect.
+
+- **Geoistatistical design:** focus on .red[where] to take measurements.
+
+---
+
+# Geostatistical design
+
+- `\(\mathcal{X}=\{x_1, \ldots, x_n\}\)` is the set of `\(n\)` locations at which the outcome
+variable will be recorded
+
+
+- `\(\mathcal{X}\)` is our .red[sampling design]
+
+
+The fundamental geostatistical edisng problem is the specification of `\(\mathcal{X}\)`
+
+--
+
+&lt;br/&gt;
+
+We always need to start from an .red[underlying model]:
+`$$Y_i = \mu + S(x_i) + Z_i$$`
+
+
+- `\(S(x)\)` is a stationary, Gaussian process with mean 0, variance `\(\sigma^2\)` and
+correlation function `\(\rho(u; \phi)\)`
+- `\(Z_i\)` are mutually independent `\(\text{N}(0, \tau^2)\)`
+
+---
+# Estimation vs. prediction
+
+In general, sampling designs that are efficient for parameter estimation
+may be inefficient for prediction, and vice versa. 
+
+--
+
+In practice, most geostatistical problems focus on spatial prediction, but parameter
+estimation is an important means to this end. 
+
+--
+
+Need to compromise between designing for .red[efficient parameter estimation] and designing for .red[efficient prediction]
+
+--
+
+The spatial covariance structure of the process `\(S(x)\)` plays a critical role in this compromise.
+
+---
+# Performance criteria
+
+A sampling design  should be chosen to optimise a .red[performance criterion]
+that reflects the particular objective of the study.
+
+--
+
+**Prediction** 
+&lt;br/&gt;
+Spatially averaged mean squared prediction error 
+`$$\text{MSPE}=\int_AE\left[\left\{\hat{S}(x)-S(x)\right\}^2\right]dx$$`
+where `\(\hat{S}(x)=E[S(x)\mid Y;\mathcal{X}]\)` 
+
+--
+
+**Policy relevant**
+&lt;br/&gt;
+When the measurement exceeds a policy-defined threshold for intervention, let's say `\(t\)`
+`$$\int_A\mid\text{Prob}\{\hat{Y}(x) &gt; t \mid Y \} -0.5\mid dx$$`
+this criterion favors sampling designs that minimise the decision uncertainty.
+
+---
+# .font90[Completely random  and regular designs]
+
+Completely .red[random] designs usually a good choice for unbiased parameter
+estimation...
+&lt;br/&gt;
+...but less attrictive for prediction is .red[spatial varion] is present.
+
+Completely .red[regular] designs generally lead to efficient spatial prediction.
+
+&lt;br/&gt;
+
+&lt;img src="figs/random_regular.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+---
+# Inhibitory designs
+
+A good compromise between a completely random and a completely regular design. 
+
+A .red[minimum permissible distance] `\(d_0\)` is imposed between any two points but the process is otherwise completely random.
+
+The resulting designs exhibit a degree of spatial regularity without the deterministic geometry of a lattice design. 
+
+&lt;br/&gt;
+
+&lt;img src="figs/inhibitory.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+---
+# Variogram and prediction
+
+A critical consideration in geostatistical prediction is the behaviour of the
+variogram, `\(V(u)\)`, at small distances `\(u\)`
+
+`$$V(u)=\tau^2 + \sigma^2\{1 - \rho(u)\}$$`
+
+`\(u=0 \rightarrow \rho(0)=1 \rightarrow V(u) = \tau^2\)`
+
+- The predicted values of the surface `\(S(x)\)` interpolate the data if `\(\tau^2=0\)`. Otherwise, they smooth out local fluctuations in the data to an extent that depends on the ratio `\(\tau^2 / \sigma^2\)`
+
+- `\(\tau^2\)` can be directly estimate from independent measurements of `\(Y\)` at the same location
+
+- if the data does not contain multiple co-located measurements, estimation of `\(\tau^2\)` necessarily involves extrapolation.
+
+---
+# Variogram and prediction
+
+Hypothetical empirical variogram and two theoretical variograms that fit the empirical variogram equally well, but have substantially different values of `\(\tau^2\)` and would led to materially different predictions of `\(S(x)\)`.
+
+&lt;img src="figs/vario_design.png" width="65%" style="display: block; margin: auto;" /&gt;
+
+---
+# Inhibitory plus close pairs designs
+
+An inhibitory design is augmented by the inclusion of locations paired with, and in close proximity to, a sub-set of locations in the inhibitory design.
+
+A design in this class is defined by four quantities: 
+- `\(n\)` the total number of points; 
+- `\(k\)` the number of close pairs; 
+- `\(d_0\)` the minimum distance between any two of the `\(n − k\)` locations in the inhibitory component of the design; 
+- `\(r\)` the maximum distance between two paired locations.
+
+&lt;img src="figs/inpcp.png" width="75%" style="display: block; margin: auto;" /&gt;
+
+---
+# Comparing designs
+
+**Data generating model**
+&lt;br/&gt;
+`$$Y_i = \mu + S(x_i) + Z_i$$`
+with `\(\mu = 0\)`, `\(~\sigma^2=1\)`, `\(~\tau^2=0\)` and `\(\rho(u)=\exp(-u/\phi)\)`
+
+.red[SGP1] `\(~\phi=0.1\)` and .red[SGP2] `\(~\phi=0.2\)` 
+
+--
+
+&lt;br/&gt;
+
+**Sampling designs**
+&lt;br/&gt;
+Three designs, each with `\(n=100\)` points sampled on the unit square
+- .red[D1] a completely random design
+- .red[D2] a simple inhibitory design
+- .red[D3] an inhibitory-plus-close pairs design with 80 inhibitory points and
+20 close pairs
+
+
+
+---
+# Comparing designs
+
+&lt;img src="figs/designs.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+&lt;br/&gt;
+
+The preformance criterion used to compare the three designs is the .red[spatially averaged mean squared prediction error]. 
+
+&lt;img src="figs/tab_designs.png" width="45%" style="display: block; margin: auto;" /&gt;
+
+---
+class: inverse, center, middle
+
+# Application
+
+---
+# Malaria prevalence survey in Malawi
+
+**Goal:** obtain optimal predictions of malaria prevalence in Majete
+
+&lt;img src="figs/majete.png" width="58%" style="display: block; margin: auto;" /&gt;
+
+---
+# Underlying model
+
+`$$\log\left\{\frac{p(x_i)}{1-p(x_i)}\right\}=\alpha+S(x_i)+Z_i$$`
+
+Model was fitted using previously collected prevalence data from a sample of households in area B. 
+
+&lt;img src="figs/table_majete.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+# Sampling design
+
+Parameter estimates used to optimize a sample of 200 households from the 857 candidates in sub-area A, with optimisation criterion the sum of the mean squared prediction errors for
+`\(S(x)\)` at all 857 household locations:
+
+`$$\text{SSPE}=\sum_{i=1}^{857}E[\{\hat{S}(x) - S(x)\}^2]$$`
+
+&lt;img src="figs/design_majete.png" width="60%" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
